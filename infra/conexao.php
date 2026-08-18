@@ -2,11 +2,11 @@
 
 $host = "localhost";
 $user = "root";
-$senha = "";
+$senha = "root";
 $banco = "cadastro_pratos";
 
 
-$conexao = new msqli($host, $user, $senha, $banco);
+$conexao = new mysqli($host, $user, $senha, $banco);
 
 if ($conexao->connect_error) {
     die("Erro na conexão combanco: ". $conexao->connect_error);
