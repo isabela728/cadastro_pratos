@@ -191,3 +191,137 @@ td:nth-child(2) {
 	padding: 28px 20px;
 	color: #69747b;
 }
+
+/* Formulários exibidos nos modais */
+.pagina_formulario {
+	padding: 34px 28px 28px;
+	background: white;
+}
+
+.formulario_cabecalho {
+	margin-bottom: 24px;
+	padding-right: 38px;
+	border-bottom: 1px solid #e4ded4;
+}
+
+.formulario_cabecalho h1 {
+	font-size: 27px;
+}
+
+.formulario {
+	max-width: 560px;
+}
+
+.formulario label {
+	margin-top: 14px;
+}
+
+.formulario input,
+.formulario select {
+	display: block;
+}
+
+.formulario br {
+	display: none;
+}
+
+.botoes_forms {
+	display: flex;
+	justify-content: flex-end;
+	gap: 10px;
+	margin-top: 22px;
+	padding-top: 16px;
+	border-top: 1px solid #e4ded4;
+}
+
+.botoes_forms .botao {
+	font-size: 13px;
+}
+
+.mensagem_erro {
+	margin-top: 12px;
+	color: #b42318;
+	font-size: 13px;
+}
+
+/* Estrutura e tamanhos dos modais */
+body:has(.fundo_modal) {
+	overflow: hidden;
+}
+
+.fundo_modal {
+	position: fixed;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 20px;
+	background: #252a2dcc;
+}
+
+.modal {
+	position: relative;
+	width: min(620px, 100%);
+	height: min(535px, calc(100vh - 40px));
+	overflow: hidden;
+	border-radius: 10px;
+	background: white;
+	box-shadow: 0 12px 40px #0000003d;
+}
+
+.modal_usuario {
+	height: min(365px, calc(100vh - 40px));
+}
+
+.modal_prato {
+	height: min(590px, calc(100vh - 40px));
+}
+
+.modal_editar_prato {
+	width: min(700px, 100%);
+	height: min(650px, calc(100vh - 40px));
+}
+
+.fechar_modal {
+	position: absolute;
+	z-index: 1;
+	top: 14px;
+	right: 18px;
+	color: #69747b;
+	font-size: 30px;
+	line-height: 1;
+	text-decoration: none;
+}
+
+.modal iframe {
+	width: 100%;
+	height: 100%;
+	display: block;
+	border: 0;
+}
+
+@media (max-width: 700px) {
+	.cabecalho {
+		display: block;
+	}
+
+	.botoes_cabecalho {
+		margin-top: 20px;
+	}
+
+	.filtros form {
+		display: block;
+	}
+
+	.filtros label,
+	.filtros input,
+	.filtros select,
+	.filtros .botao {
+		display: block;
+		margin-bottom: 8px;
+	}
+
+	.filtros .botao {
+		width: 100%;
+	}
+}

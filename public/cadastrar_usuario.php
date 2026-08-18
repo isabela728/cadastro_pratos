@@ -21,8 +21,10 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $nome = trim($_POST['nome'] ?? '');
     $email = trim($_POST['email'] ?? '');
 
-    if($nome === '' || $email === ''){
-        $erro_msg = 'Preencha todos os campos antes de cadastrar.';
+    if($nome === '' || mb_strlen($nome) > 100){
+        $erro_msg = 'Preencha todos os campos corretamente.';
+    } elseif($email === '' || mb_strlen($email) > 100 || !filter_var($email, FILTER_VALIDATE_EMAIL)){
+        $erro_msg = 'Preencha todos os campos corretamente.';
     } else {
         $sql = "INSERT INTO usuarios (nome,email) VALUES (?, ?)";
 
@@ -34,7 +36,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
         if($stmt->execute() === TRUE){
             $stmt->close();
-            header('Location: ../index.php?sucesso=usuario');
+            echo '<script>window.top.location.href = "../index.php";</script>';
             exit();
         }else{
             $erro_msg = 'Erro ao cadastrar: ' . $stmt->error;
@@ -57,10 +59,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 <body class="pagina_formulario">
 
     <div class="formulario_cabecalho">
-        <p class="texto_pequeno">GESTÃO INTERNA</p>
-        <h1>Novo integrante</h1>
+        <h1>Novo Usuário</h1>
     </div>
-    <form class="formulario" method="POST" target="_top">
+    <form class="formulario" method="POST">
         <label>Email:</label>
         <input type="email" name="email" required value="<?php echo htmlspecialchars($email ?? ''); ?>">
         <br>
@@ -68,61 +69,17 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         <input type="text" name="nome" required value="<?php echo htmlspecialchars($nome ?? ''); ?>">
         <br>
         <?php if($erro_msg): ?>
-            <div style="color: red"><?php echo $erro_msg; ?></div>
+            <div class="mensagem_erro"><?php echo htmlspecialchars($erro_msg); ?></div>
         <?php endif; ?>
         <?php if($success_msg): ?>
             <div style="color: green"><?php echo $success_msg; ?></div>
         <?php endif; ?>
         <br>
-        <div class="rodape_formulario">
-            <a class="botao botao_claro" href="../index.php" target="_top">Cancelar</a>
-            <button class="botao botao_principal" type="submit">Cadastrar membro</button>
+        <div class="botoes_forms">
+            <a class="botao" href="../index.php" target="_top">Cancelar</a>
+            <button class="botao botao_principal" type="submit">Cadastrar usuário</button>
         </div>
     </form>
-    <div class="lista_secundaria">
-    <?php
-    
-        $sql = "SELECT * FROM usuarios";
-        $resultado = $conexao->query($sql);
-
-        if($resultado === false){
-            echo '<div style="color:orange">Não foi possível listar usuários: ' . htmlspecialchars($conexao->error) . '</div>';
-        } else {
-            if ($resultado->num_rows > 0) {
-                    echo "<h4>Usuários cadastrados:</h4>";
-                    echo "<table border='1' cellpadding='6' cellspacing='0'>";
-                    echo "<thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>Email</th>
-                                <th>Ações</th>
-                            </tr>
-                            </thead>
-                            <tbody>";
-                    while($row = $resultado->fetch_assoc()) {
-                        $id = isset($row['id_usuario']) ? htmlspecialchars($row['id_usuario']) : '';
-                        $nome = isset($row['nome']) ? htmlspecialchars($row['nome']) : '';
-                        $email = isset($row['email']) ? htmlspecialchars($row['email']) : '';
-                        $editar_usuario = "editar_usuario.php?id=" . urlencode($id);
-                        $excluir_usuario = "excluir_usuario.php?id=" . urlencode($id);
-                        echo "<tr>
-                                <td>" . $id . "</td>
-                                <td>" . $nome . "</td>
-                                <td>" . $email . "</td>
-                                <td><a href='" . $editar_usuario . "'>Editar</a> | <a href='" . $excluir_usuario . "' onclick=\"return confirm('Confirma exclusão deste usuário?');\">Excluir</a></td></tr>";
-                    }
-                    echo "</tbody>
-                        </table>";
-            } else {
-                echo "Nenhum usuário cadastrado.";
-            }
-        }
-
-    ?>
-    </div>
-
-
 
 </body>
 </html>

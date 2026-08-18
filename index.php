@@ -122,5 +122,18 @@ function escapar($texto) {
         </section>
 
     </main>
+
+    <?php if ($tela_aberta === 'prato' || $tela_aberta === 'usuario' || $tela_aberta === 'editar_prato'): ?>
+        <div class="fundo_modal">
+            <section class="modal<?php echo $tela_aberta === 'prato' ? ' modal_prato' : ''; ?><?php echo $tela_aberta === 'usuario' ? ' modal_usuario' : ''; ?><?php echo $tela_aberta === 'editar_prato' ? ' modal_editar_prato' : ''; ?>">
+                <a class="fechar_modal" href="index.php" aria-label="Fechar">&times;</a>
+                <?php if ($tela_aberta === 'editar_prato'): ?>
+                    <iframe src="public/editar_pratos.php?id=<?php echo (int) ($_GET['id'] ?? 0); ?>" title="Editar prato"></iframe>
+                <?php else: ?>
+                    <iframe src="public/cadastrar_<?php echo $tela_aberta === 'prato' ? 'prato' : 'usuario'; ?>.php" title="Cadastro"></iframe>
+                <?php endif; ?>
+            </section>
+        </div>
+    <?php endif; ?>
 </body>
 </html>

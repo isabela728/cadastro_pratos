@@ -32,8 +32,17 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     $categoria = trim($_POST['categoria'] ?? '');
     $id_usuario = (int) ($_POST['id_usuario'] ?? 0);
 
-    if($nome === '' || $descricao === '' || $preco === '' || !is_numeric($preco) || $categoria === '' || $id_usuario <= 0){
-        $erro_msg = 'Preencha todos os campos antes de cadastrar.';
+    $usuario_existe = false;
+    $consulta_usuario = $conexao->prepare("SELECT id_usuario FROM usuarios WHERE id_usuario = ?");
+    if ($consulta_usuario) {
+        $consulta_usuario->bind_param('i', $id_usuario);
+        $consulta_usuario->execute();
+        $usuario_existe = $consulta_usuario->get_result()->num_rows > 0;
+        $consulta_usuario->close();
+    }
+
+    if($nome === '' || mb_strlen($nome) > 100 || $descricao === '' || mb_strlen($descricao) > 200 || $preco === '' || !is_numeric($preco) || (float) $preco < 0 || (float) $preco > 99999999.99 || $categoria === '' || mb_strlen($categoria) > 50 || !$usuario_existe){
+        $erro_msg = 'Preencha todos os campos corretamente.';
     } else {
         $sql = "INSERT INTO pratos (nome, descricao, preco, categoria, id_usuario) VALUES (?, ?, ?, ?, ?)";
 
@@ -46,7 +55,7 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
         if($stmt->execute() === TRUE){
             $stmt->close();
-            header('Location: ../index.php?sucesso=prato');
+            echo '<script>window.top.location.href = "../index.php";</script>';
             exit();
         }else{
             $erro_msg = 'Erro ao cadastrar: ' . $stmt->error;
@@ -69,10 +78,9 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 <body class="pagina_formulario">
 
     <div class="formulario_cabecalho">
-        <p class="texto_pequeno">FICHA TÉCNICA</p>
         <h1>Novo prato</h1>
     </div>
-    <form class="formulario" method="POST" target="_top">
+    <form class="formulario" method="POST">
         <label>Nome:</label>
         <input type="text" name="nome" required value="<?php echo htmlspecialchars($nome ?? ''); ?>">
         <br>
@@ -96,65 +104,18 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
         </select>
         <br>
         <?php if($erro_msg): ?>
-            <div style="color: red"><?php echo $erro_msg; ?></div>
+            <div class="mensagem_erro"><?php echo htmlspecialchars($erro_msg); ?></div>
         <?php endif; ?>
         <?php if($success_msg): ?>
             <div style="color: green"><?php echo $success_msg; ?></div>
         <?php endif; ?>
         <br>
-        <div class="rodape_formulario">
-            <a class="botao botao_claro" href="../index.php" target="_top">Cancelar</a>
+        <div class="botoes_forms">
+            <a class="botao" href="../index.php" target="_top">Cancelar</a>
             <button class="botao botao_principal" type="submit">Salvar prato</button>
         </div>
     </form>
-    <div class="lista_secundaria">
-    <?php
-    
-        $sql = "SELECT * FROM pratos";
-        $resultado = $conexao->query($sql);
-
-        if($resultado === false){
-            echo '<div style="color:orange">Não foi possível listar pratos: ' . htmlspecialchars($conexao->error) . '</div>';
-        } else {
-            if ($resultado->num_rows > 0) {
-                    echo "<h4>Pratos cadastrados:</h4>";
-                    echo "<table border='1' cellpadding='6' cellspacing='0'>";
-                    echo "<thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome</th>
-                                <th>Descrição</th>
-                                <th>Preço</th>
-                                <th>Categoria</th>
-                                <th>Ações</th>
-                            </tr>
-                            </thead>
-                            <tbody>";
-                    while($row = $resultado->fetch_assoc()) {
-                        $id = isset($row['id_prato']) ? htmlspecialchars($row['id_prato']) : '';
-                        $nome = isset($row['nome']) ? htmlspecialchars($row['nome']) : '';
-                        $descricao = isset($row['descricao']) ? htmlspecialchars($row['descricao']) : '';
-                        $preco = isset($row['preco']) ? htmlspecialchars($row['preco']) : '';
-                        $categoria = isset($row['categoria']) ? htmlspecialchars($row['categoria']) : '';
-                        $editar_prato = "editar_pratos.php?id=" . urlencode($id);
-                        $excluir_prato = "excluir_prato.php?id=" . urlencode($id);
-                        echo "<tr>
-                                <td>" . $id . "</td>
-                                <td>" . $nome . "</td>
-                                <td>" . $descricao . "</td>
-                                <td>" . $preco . "</td>
-                                <td>" . $categoria . "</td>
-                                <td><a href='" . $editar_prato . "'>Editar</a> | <a href='" . $excluir_prato . "' onclick=\"return confirm('Confirma exclusão deste prato?');\">Excluir</a></td></tr>";
-                    }
-                    echo "</tbody>
-                        </table>";
-            } else {
-                echo "Nenhum prato cadastrado.";
-            }
-        }
-
-    ?>
-    </div>
+   
 
 
 
