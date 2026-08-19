@@ -9,6 +9,7 @@ Sistema para cadastrar usuários e organizar os pratos de um restaurante. Cada p
 - Informar o usuário responsável por cada prato.
 - Buscar pratos por nome ou descrição.
 - Filtrar pratos por usuário.
+- Filtrar pratos por vategoria.
 - Visualizar o responsável e o email na tabela.
 
 ## Tecnologias
