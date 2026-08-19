@@ -5,11 +5,14 @@ $id = isset($_GET["id"]) ? (int) $_GET["id"] : 0;
 $usuarios = [];
 $erro = '';
 
-$resultado_usuarios = $conexao->query("SELECT id_usuario, nome FROM usuarios ORDER BY nome");
-if ($resultado_usuarios) {
+$stmt_usuarios = $conexao->prepare("SELECT id_usuario, nome FROM usuarios ORDER BY nome");
+if ($stmt_usuarios) {
+    $stmt_usuarios->execute();
+    $resultado_usuarios = $stmt_usuarios->get_result();
     while ($usuario = $resultado_usuarios->fetch_assoc()) {
         $usuarios[] = $usuario;
     }
+    $stmt_usuarios->close();
 }
 
 if($id <= 0){
@@ -32,15 +35,7 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         $consulta_usuario->close();
     }
 
-    if($nome === '' || mb_strlen($nome) > 100){
-        $erro = 'Preencha todos os campos corretamente.';
-    } elseif($descricao === '' || mb_strlen($descricao) > 200){
-        $erro = 'Preencha todos os campos corretamente.';
-    } elseif($preco === '' || !is_numeric($preco) || (float) $preco < 0 || (float) $preco > 99999999.99){
-        $erro = 'Preencha todos os campos corretamente.';
-    } elseif($categoria === '' || mb_strlen($categoria) > 50){
-        $erro = 'Preencha todos os campos corretamente.';
-    } elseif(!$usuario_existe){
+    if ($nome === '' || mb_strlen($nome) > 100 || $descricao === '' || mb_strlen($descricao) > 200 || $preco === '' || !is_numeric($preco) || (float) $preco < 0 || (float) $preco > 99999999.99 || $categoria === '' || mb_strlen($categoria) > 50 || !$usuario_existe) {
         $erro = 'Preencha todos os campos corretamente.';
     } else {
         $sql = "UPDATE pratos SET nome = ?, descricao = ?, preco = ?, categoria = ?, id_usuario = ? WHERE id_prato = ?";
@@ -48,9 +43,11 @@ if($_SERVER['REQUEST_METHOD'] === 'POST'){
         if(!$stmt) die('Prepare falhou: ' . $conexao->error);
         $preco = (float) $preco;
         $stmt->bind_param('ssdsii', $nome, $descricao, $preco, $categoria, $id_usuario, $id);
-        if($stmt->execute()){
+        if ($stmt->execute()) {
             $stmt->close();
-            echo '<script>window.top.location.href = "../index.php";</script>';
+            echo '<!doctype html><html><head><meta charset="utf-8"><title>Sucesso</title></head><body>';
+            echo '<script>if (top) top.location.href = "../index.php"; else location.href = "../index.php";</script>';
+            echo '</body></html>';
             exit();
         } else {
             $erro = 'Erro ao atualizar: ' . $stmt->error;
@@ -88,28 +85,34 @@ if ($stmt) {
         <h1>Editar prato</h1>
     </div>
     <main class="formulario">
-        <p class="subtitulo">Atualize as informações de <?php echo htmlspecialchars($prato["nome"] ?? ''); ?>.</p>
+        <p class="subtitulo">Atualize as informações de <?php echo $prato["nome"] ?? ''; ?>.</p>
         <form action="editar_pratos.php?id=<?php echo urlencode($id); ?>" method="POST">
-            <input type="hidden" name="id" value="<?php echo htmlspecialchars($prato["id_prato"] ?? ''); ?>">
+            <input type="hidden" name="id" value="<?php echo $prato["id_prato"] ?? ''; ?>">
 
             <label for="nome">Nome:</label>
-            <input type="text" name="nome" required value="<?php echo htmlspecialchars($prato["nome"] ?? ''); ?>">
+            <input type="text" name="nome" required value="<?php echo $prato["nome"] ?? ''; ?>">
             <br>
             <label for="descricao">Descrição:</label>
-            <input type="text" name="descricao" required value="<?php echo htmlspecialchars($prato["descricao"] ?? ''); ?>">
+            <input type="text" name="descricao" required value="<?php echo $prato["descricao"] ?? ''; ?>">
             <br>
             <label for="preco">Preço:</label>
-            <input type="number" name="preco" step="0.01" min="0" required value="<?php echo htmlspecialchars($prato["preco"] ?? ''); ?>">
+            <input type="number" name="preco" step="0.01" min="0" required value="<?php echo $prato["preco"] ?? ''; ?>">
             <br>
             <label for="categoria">Categoria:</label>
-            <input type="text" name="categoria" required value="<?php echo htmlspecialchars($prato["categoria"] ?? ''); ?>">
+            <select name="categoria" required>
+                <option value="">Selecione a categoria</option>
+                <option value="Lanche" <?php echo ($prato["categoria"] ?? '') === 'Lanche' ? 'selected' : ''; ?>>Lanche</option>
+                <option value="Prato Principal" <?php echo ($prato["categoria"] ?? '') === 'Prato Principal' ? 'selected' : ''; ?>>Prato Principal</option>
+                <option value="Sobremesa" <?php echo ($prato["categoria"] ?? '') === 'Sobremesa' ? 'selected' : ''; ?>>Sobremesa</option>
+                <option value="Bebida" <?php echo ($prato["categoria"] ?? '') === 'Bebida' ? 'selected' : ''; ?>>Bebida</option>
+            </select>
             <br>
             <label for="id_usuario">Usuário responsável:</label>
             <select id="id_usuario" name="id_usuario" required>
                 <option value="">Selecione o usuário</option>
                 <?php foreach ($usuarios as $usuario): ?>
-                    <option value="<?php echo htmlspecialchars($usuario['id_usuario']); ?>" <?php echo (int) ($prato['id_usuario'] ?? 0) === (int) $usuario['id_usuario'] ? 'selected' : ''; ?>>
-                        <?php echo htmlspecialchars($usuario['nome']); ?>
+                    <option value="<?php echo $usuario['id_usuario']; ?>" <?php echo (int) ($prato['id_usuario'] ?? 0) === (int) $usuario['id_usuario'] ? 'selected' : ''; ?>>
+                        <?php echo $usuario['nome']; ?>
                     </option>
                 <?php endforeach; ?>
             </select>
@@ -120,7 +123,7 @@ if ($stmt) {
             </div>
         </form>
         <?php if($erro): ?>
-            <div class="mensagem_erro"><?php echo htmlspecialchars($erro); ?></div>
+            <div class="mensagem_erro"><?php echo $erro; ?></div>
         <?php endif; ?>
     </main>
 </body>

@@ -1,4 +1,5 @@
 <?php
+session_start();
 
 include "infra/conexao.php";
 
@@ -8,11 +9,14 @@ $tela_aberta = $_GET['abrir'] ?? '';
 $pratos = [];
 $usuarios = [];
 
-$resultado_usuarios = $conexao->query("SELECT id_usuario, nome FROM usuarios ORDER BY nome");
-if ($resultado_usuarios) {
+$stmt_usuarios = $conexao->prepare("SELECT id_usuario, nome FROM usuarios ORDER BY nome");
+if ($stmt_usuarios) {
+    $stmt_usuarios->execute();
+    $resultado_usuarios = $stmt_usuarios->get_result();
     while ($usuario = $resultado_usuarios->fetch_assoc()) {
         $usuarios[] = $usuario;
     }
+    $stmt_usuarios->close();
 }
 
 $sql_pratos = "SELECT pratos.id_prato, pratos.nome, pratos.descricao, pratos.preco,
@@ -34,8 +38,32 @@ while ($prato = $resultado_pratos->fetch_assoc()) {
     $pratos[] = $prato;
 }
 
-function escapar($texto) {
-    return htmlspecialchars((string) $texto, ENT_QUOTES, 'UTF-8');
+$mensagem_sucesso = '';
+$mensagem_popup = '';
+
+if(isset($_GET['success']) && $_GET['success'] == '1'){
+    $mensagem_sucesso = 'Prato cadastrado com sucesso!';
+}
+if(isset($_GET['edited']) && $_GET['edited'] == '1'){
+    $mensagem_sucesso = 'Prato atualizado com sucesso!';
+}
+if(isset($_GET['deleted']) && $_GET['deleted'] == '1'){
+    $mensagem_sucesso = 'Prato excluído com sucesso!';
+}
+
+if(isset($_GET['success_user']) && $_GET['success_user'] == '1'){
+    $mensagem_sucesso = 'Usuário cadastrado com sucesso!';
+}
+if(isset($_GET['edited_user']) && $_GET['edited_user'] == '1'){
+    $mensagem_sucesso = 'Usuário atualizado com sucesso!';
+}
+if(isset($_GET['deleted_user']) && $_GET['deleted_user'] == '1'){
+    $mensagem_sucesso = 'Usuário excluído com sucesso!';
+}
+
+if (!empty($_SESSION['erro_popup'])) {
+    $mensagem_popup = $_SESSION['erro_popup'];
+    unset($_SESSION['erro_popup']);
 }
 
 ?>
@@ -62,14 +90,14 @@ function escapar($texto) {
         <section class="filtros">
             <form method="GET">
                 <label for="busca">Buscar prato</label>
-                <input id="busca" type="search" name="busca" value="<?php echo escapar($busca); ?>" placeholder="Digite o nome ou descrição">
+                <input id="busca" type="search" name="busca" value="<?php echo $busca; ?>" placeholder="Digite o nome ou descrição">
 
                 <label for="id_usuario">Responsável</label>
                 <select id="id_usuario" name="id_usuario">
                     <option value="0">Todos os responsáveis</option>
                     <?php foreach ($usuarios as $usuario): ?>
-                        <option value="<?php echo escapar($usuario['id_usuario']); ?>" <?php echo $id_usuario === (int) $usuario['id_usuario'] ? 'selected' : ''; ?>>
-                            <?php echo escapar($usuario['nome']); ?>
+                        <option value="<?php echo $usuario['id_usuario']; ?>" <?php echo $id_usuario === (int) $usuario['id_usuario'] ? 'selected' : ''; ?>>
+                            <?php echo $usuario['nome']; ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
@@ -101,15 +129,15 @@ function escapar($texto) {
                         <tbody>
                             <?php foreach ($pratos as $prato): ?>
                                 <tr>
-                                    <td><strong><?php echo escapar($prato['nome']); ?></strong></td>
-                                    <td><?php echo escapar($prato['descricao']); ?></td>
-                                    <td><span class="tag"><?php echo escapar($prato['categoria']); ?></span></td>
+                                    <td><strong><?php echo $prato['nome']; ?></strong></td>
+                                    <td><?php echo $prato['descricao']; ?></td>
+                                    <td><span class="tag"><?php echo $prato['categoria']; ?></span></td>
                                     <td class="preco">R$ <?php echo number_format((float) $prato['preco'], 2, ',', '.'); ?></td>
-                                    <td><?php echo escapar($prato['nome_usuario'] ?: 'Não informado'); ?></td>
-                                    <td><?php echo escapar($prato['email_usuario'] ?: 'Não informado'); ?></td>
+                                    <td><?php echo $prato['nome_usuario'] ?: 'Não informado'; ?></td>
+                                    <td><?php echo $prato['email_usuario'] ?: 'Não informado'; ?></td>
                                     <td class="acoes">
-                                        <a href="?abrir=editar_prato&id=<?php echo escapar($prato['id_prato']); ?>">Editar</a>
-                                        <a href="public/excluir_prato.php?id=<?php echo escapar($prato['id_prato']); ?>" onclick="return confirm('Deseja excluir este prato?');">Excluir</a>
+                                        <a href="?abrir=editar_prato&id=<?php echo $prato['id_prato']; ?>">Editar</a>
+                                        <a href="public/excluir_prato.php?id=<?php echo $prato['id_prato']; ?>" onclick="return confirm('Deseja excluir este prato?');">Excluir</a>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -133,6 +161,13 @@ function escapar($texto) {
                     <iframe src="public/cadastrar_<?php echo $tela_aberta === 'prato' ? 'prato' : 'usuario'; ?>.php" title="Cadastro"></iframe>
                 <?php endif; ?>
             </section>
+        </div>
+    <?php endif; ?>
+
+    <?php if (!empty($mensagem_sucesso) || !empty($mensagem_popup)): ?>
+        <div class="popup <?php echo !empty($mensagem_sucesso) ? 'success' : 'error'; ?> show" role="alert" aria-live="assertive">
+            <a class="fechar_mensagem" href="index.php" aria-label="Fechar">&times;</a>
+            <div><?php echo !empty($mensagem_sucesso) ? $mensagem_sucesso : $mensagem_popup; ?></div>
         </div>
     <?php endif; ?>
 </body>

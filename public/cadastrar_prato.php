@@ -4,24 +4,19 @@ session_start();
 include("../infra/conexao.php");
 
 $erro_msg = '';
-$success_msg = '';
 $usuarios = [];
 
-$resultado_usuarios = $conexao->query("SELECT id_usuario, nome FROM usuarios ORDER BY nome");
-if ($resultado_usuarios) {
+$nome = $descricao = $preco = $categoria = '';
+$id_usuario = 0;
+
+$stmt_usuarios = $conexao->prepare("SELECT id_usuario, nome FROM usuarios ORDER BY nome");
+if ($stmt_usuarios) {
+    $stmt_usuarios->execute();
+    $resultado_usuarios = $stmt_usuarios->get_result();
     while ($usuario = $resultado_usuarios->fetch_assoc()) {
         $usuarios[] = $usuario;
     }
-}
-
-if(isset($_GET['success']) && $_GET['success'] == '1'){
-    $success_msg = 'Prato cadastrado com sucesso!';
-}
-if(isset($_GET['edited']) && $_GET['edited'] == '1'){
-    $success_msg = 'Prato atualizado com sucesso!';
-}
-if(isset($_GET['deleted']) && $_GET['deleted'] == '1'){
-    $success_msg = 'Prato excluído com sucesso!';
+    $stmt_usuarios->close();
 }
 
 if($_SERVER["REQUEST_METHOD"] == "POST"){
@@ -55,11 +50,15 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
 
         if($stmt->execute() === TRUE){
             $stmt->close();
-            echo '<script>window.top.location.href = "../index.php";</script>';
+            echo '<!doctype html><html><head><meta charset="utf-8"><title>Sucesso</title></head><body>';
+            echo '<script>if (top) top.location.href = "../index.php?success=1"; else location.href = "../index.php?success=1";</script>';
+            echo '</body></html>';
             exit();
-        }else{
-            $erro_msg = 'Erro ao cadastrar: ' . $stmt->error;
+        } else {
+            $_SESSION['popup_error'] = 'Erro ao cadastrar: ' . $stmt->error;
             $stmt->close();
+            header('Location: ../index.php');
+            exit();
         }
     }
 
@@ -82,42 +81,42 @@ if($_SERVER["REQUEST_METHOD"] == "POST"){
     </div>
     <form class="formulario" method="POST">
         <label>Nome:</label>
-        <input type="text" name="nome" required value="<?php echo htmlspecialchars($nome ?? ''); ?>">
+        <input type="text" name="nome" required value="<?php echo $nome ?? ''; ?>">
         <br>
         <label>Descrição:</label>
-        <input type="text" name="descricao" required value="<?php echo htmlspecialchars($descricao ?? ''); ?>">
+        <input type="text" name="descricao" required value="<?php echo $descricao ?? ''; ?>">
         <br>
         <label>Preço:</label>
-        <input type="number" name="preco" step="0.01" min="0" required value="<?php echo htmlspecialchars($preco ?? ''); ?>">
+        <input type="number" name="preco" step="0.01" min="0" required value="<?php echo $preco ?? ''; ?>">
         <br>
         <label>Categoria:</label>
-        <input type="text" name="categoria" required value="<?php echo htmlspecialchars($categoria ?? ''); ?>">
+        <select name="categoria" required>
+            <option value="">Selecione a categoria</option>
+            <option value="Lanche" <?php echo $categoria === 'Lanche' ? 'selected' : ''; ?>>Lanche</option>
+            <option value="Prato Principal" <?php echo $categoria === 'Prato Principal' ? 'selected' : ''; ?>>Prato Principal</option>
+            <option value="Sobremesa" <?php echo $categoria === 'Sobremesa' ? 'selected' : ''; ?>>Sobremesa</option>
+            <option value="Bebida" <?php echo $categoria === 'Bebida' ? 'selected' : ''; ?>>Bebida</option>
+        </select>
         <br>
         <label>Usuário responsável:</label>
         <select name="id_usuario" required>
             <option value="">Selecione o usuário</option>
             <?php foreach ($usuarios as $usuario): ?>
-                <option value="<?php echo htmlspecialchars($usuario['id_usuario']); ?>" <?php echo (int) ($id_usuario ?? 0) === (int) $usuario['id_usuario'] ? 'selected' : ''; ?>>
-                    <?php echo htmlspecialchars($usuario['nome']); ?>
+                <option value="<?php echo $usuario['id_usuario']; ?>" <?php echo (int) ($id_usuario ?? 0) === (int) $usuario['id_usuario'] ? 'selected' : ''; ?>>
+                    <?php echo $usuario['nome']; ?>
                 </option>
             <?php endforeach; ?>
         </select>
         <br>
         <?php if($erro_msg): ?>
-            <div class="mensagem_erro"><?php echo htmlspecialchars($erro_msg); ?></div>
+            <div class="mensagem_erro"><?php echo $erro_msg; ?></div>
         <?php endif; ?>
-        <?php if($success_msg): ?>
-            <div style="color: green"><?php echo $success_msg; ?></div>
-        <?php endif; ?>
+        
         <br>
         <div class="botoes_forms">
             <a class="botao" href="../index.php" target="_top">Cancelar</a>
             <button class="botao botao_principal" type="submit">Salvar prato</button>
         </div>
     </form>
-   
-
-
-
 </body>
 </html>
