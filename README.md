@@ -9,7 +9,7 @@ Sistema para cadastrar usuários e organizar os pratos de um restaurante. Cada p
 - Informar o usuário responsável por cada prato.
 - Buscar pratos por nome ou descrição.
 - Filtrar pratos por usuário.
-- Filtrar pratos por vategoria.
+- Filtrar pratos por categoria.
 - Visualizar o responsável e o email na tabela.
 
 ## Tecnologias
@@ -50,11 +50,14 @@ A conexão padrão está configurada em `infra/conexao.php`:
 ```php
 $host = "localhost";
 $user = "root";
-$senha = "";
+$senha = "root";
 $banco = "cadastro_pratos";
 ```
 
-Se deixar `$senha = ""` e não funcionar, tente usar `$senha = "root"`, que é uma senha comum em algumas instalações do XAMPP. O valor precisa ser igual a senha configurada no MySQL do seu computador.
+Se a conexão falhar, ajuste a variável `$senha` para a senha do seu MySQL. Em muitas instalações do XAMPP a senha é vazia (`$senha= ""`),
+em outras a senha padrão pode ser `$senha= "root"`, mas também pode ser diferente, então use a senha configurada no MySQL do seu sistema. 
+
+Obs: O mesmo vale para o MySQL Workbench.
 
 ## Segurança
 
