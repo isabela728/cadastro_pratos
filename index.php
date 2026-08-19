@@ -5,6 +5,7 @@ include "infra/conexao.php";
 
 $busca = trim($_GET['busca'] ?? '');
 $id_usuario = (int) ($_GET['id_usuario'] ?? 0);
+$categoria = trim($_GET['categoria'] ?? '');
 $tela_aberta = $_GET['abrir'] ?? '';
 $pratos = [];
 $usuarios = [];
@@ -26,13 +27,19 @@ $sql_pratos = "SELECT pratos.id_prato, pratos.nome, pratos.descricao, pratos.pre
                LEFT JOIN usuarios ON usuarios.id_usuario = pratos.id_usuario
                WHERE (pratos.nome LIKE ? OR pratos.descricao LIKE ?)
                  AND (? = 0 OR pratos.id_usuario = ?)
+                 AND (? = '' OR pratos.categoria = ?)
                ORDER BY pratos.id_prato DESC";
 
 $stmt_pratos = $conexao->prepare($sql_pratos);
 $texto_busca = "%{$busca}%";
-$stmt_pratos->bind_param('ssii', $texto_busca, $texto_busca, $id_usuario, $id_usuario);
-$stmt_pratos->execute();
-$resultado_pratos = $stmt_pratos->get_result();
+
+if ($stmt_pratos) {
+    $stmt_pratos->bind_param('ssiiss', $texto_busca, $texto_busca, $id_usuario, $id_usuario, $categoria, $categoria);
+    $stmt_pratos->execute();
+    $resultado_pratos = $stmt_pratos->get_result();
+} else {
+    $resultado_pratos = false;
+}
 
 while ($prato = $resultado_pratos->fetch_assoc()) {
     $pratos[] = $prato;
@@ -100,6 +107,15 @@ if (!empty($_SESSION['erro_popup'])) {
                             <?php echo $usuario['nome']; ?>
                         </option>
                     <?php endforeach; ?>
+                </select>
+
+                <label for="categoria">Categoria</label>
+                <select id="categoria" name="categoria">
+                    <option value="">Todas as categorias</option>
+                    <option value="Lanche" <?php echo ($categoria === 'Lanche') ? 'selected' : ''; ?>>Lanche</option>
+                    <option value="Prato Principal" <?php echo ($categoria === 'Prato Principal') ? 'selected' : ''; ?>>Prato Principal</option>
+                    <option value="Sobremesa" <?php echo ($categoria === 'Sobremesa') ? 'selected' : ''; ?>>Sobremesa</option>
+                    <option value="Bebida" <?php echo ($categoria === 'Bebida') ? 'selected' : ''; ?>>Bebida</option>
                 </select>
 
                 <button class="botao botao_principal" type="submit">Buscar</button>
